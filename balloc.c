@@ -22,7 +22,7 @@
  * when a file system is mounted (see ext2_fill_super).
  */
 
-#define ext2_in_range(b, first, len)	((b) >= (first) && (b) <= (first) + (len) - 1)
+#define ext2_in_range(b, first, len) ((b) >= (first) && (b) <= (first) + (len) - 1)
 
 /**
  * Check whether the block_bitmap of the given block block_group is valid.
@@ -32,7 +32,7 @@
  *  3. The bits that represent the inode_table blocks are set.
  */
 static int ext2_block_bitmap_valid(struct super_block *sb, struct ext2_group_desc *desc,
-                                   unsigned int block_group, struct buffer_head *bh)
+								   unsigned int block_group, struct buffer_head *bh)
 {
 	ext2_grpblk_t offset;
 	ext2_grpblk_t next_zero_bit;
@@ -57,8 +57,8 @@ static int ext2_block_bitmap_valid(struct super_block *sb, struct ext2_group_des
 	bitmap_blk = le32_to_cpu(desc->bg_inode_table);
 	offset = bitmap_blk - group_first_block;
 	next_zero_bit = find_next_zero_bit_le(bh->b_data,
-	                                      offset + EXT2_SB(sb)->s_itb_per_group,
-	                                      offset);
+										  offset + EXT2_SB(sb)->s_itb_per_group,
+										  offset);
 	if (next_zero_bit < offset + EXT2_SB(sb)->s_itb_per_group)
 		goto err_out; /* bad inode table */
 
@@ -66,7 +66,7 @@ static int ext2_block_bitmap_valid(struct super_block *sb, struct ext2_group_des
 
 err_out:
 	ext2_error(sb, __func__, "Invalid block bitmap - block_group = %d, block = %lu",
-	           block_group, bitmap_blk);
+			   block_group, bitmap_blk);
 	return 0;
 }
 
@@ -77,7 +77,7 @@ err_out:
  * Return buffer_head on success or NULL in case of failure.
  */
 static struct buffer_head *ext2_read_block_bitmap(struct super_block *sb,
-                                                  unsigned int block_group)
+												  unsigned int block_group)
 {
 	struct ext2_group_desc *desc;
 	struct buffer_head *bh = NULL;
@@ -90,9 +90,10 @@ static struct buffer_head *ext2_read_block_bitmap(struct super_block *sb,
 
 	bitmap_blk = le32_to_cpu(desc->bg_block_bitmap);
 	bh = sb_getblk(sb, bitmap_blk);
-	if (unlikely(!bh)) {
+	if (unlikely(!bh))
+	{
 		ext2_error(sb, __func__, "Cannot read block bitmap - block_group = %d, block_bitmap = %u",
-		           block_group, le32_to_cpu(desc->bg_block_bitmap));
+				   block_group, le32_to_cpu(desc->bg_block_bitmap));
 		return NULL;
 	}
 
@@ -102,17 +103,19 @@ static struct buffer_head *ext2_read_block_bitmap(struct super_block *sb,
 	ret = bh_read(bh, 0);
 	if (ret < 0)
 		return bh;
-	if (ret < 0) {
+	if (ret < 0)
+	{
 		brelse(bh);
 		ext2_error(sb, __func__, "Cannot read block bitmap - block_group = %d, block_bitmap = %u",
-		           block_group, le32_to_cpu(desc->bg_block_bitmap));
+				   block_group, le32_to_cpu(desc->bg_block_bitmap));
 		return NULL;
 	}
 
-	if (!ext2_block_bitmap_valid(sb, desc, block_group, bh)) {
+	if (!ext2_block_bitmap_valid(sb, desc, block_group, bh))
+	{
 		brelse(bh);
 		ext2_error(sb, __func__, "Block bitmap is not valid - block_group = %d, block_bitmap = %u",
-		           block_group, le32_to_cpu(desc->bg_block_bitmap));
+				   block_group, le32_to_cpu(desc->bg_block_bitmap));
 		return NULL;
 	}
 
@@ -123,8 +126,8 @@ static struct buffer_head *ext2_read_block_bitmap(struct super_block *sb,
  * Update desc->bg_free_blocks_count by adding count (can also be negative).
  */
 static void group_update_free_blocks(struct super_block *sb, int group_no,
-                                     struct ext2_group_desc *desc, struct buffer_head *bh,
-                                     int count)
+									 struct ext2_group_desc *desc, struct buffer_head *bh,
+									 int count)
 {
 	struct ext2_sb_info *sbi = EXT2_SB(sb);
 	unsigned free_blocks;
@@ -148,7 +151,7 @@ static void group_update_free_blocks(struct super_block *sb, int group_no,
  *  4. FIXME what about other metadata blocks (group descriptors, bitmaps, ...)
  */
 static int ext2_data_blocks_valid(struct ext2_sb_info *sbi,
-                                  ext2_fsblk_t start_blk, unsigned int count)
+								  ext2_fsblk_t start_blk, unsigned int count)
 {
 	ext2_fsblk_t end_blk = start_blk + count - 1;
 
@@ -176,8 +179,8 @@ static int ext2_data_blocks_valid(struct ext2_sb_info *sbi,
  *  3. It is part of the inode_table.
  */
 static int ext2_data_blocks_valid_bg(struct ext2_group_desc *desc,
-                                     struct ext2_sb_info *sbi,
-                                     ext2_fsblk_t start_blk, unsigned int count)
+									 struct ext2_sb_info *sbi,
+									 ext2_fsblk_t start_blk, unsigned int count)
 {
 	ext2_fsblk_t end_blk = start_blk + count - 1;
 
@@ -205,27 +208,30 @@ static int ext2_data_blocks_valid_bg(struct ext2_group_desc *desc,
  * On failure, returns NULL.
  */
 struct ext2_group_desc *ext2_get_group_desc(struct super_block *sb,
-                                            unsigned int block_group,
-                                            struct buffer_head **bh)
+											unsigned int block_group,
+											struct buffer_head **bh)
 {
 	unsigned long group_desc;
 	unsigned long offset;
 	struct ext2_group_desc *desc;
 	struct ext2_sb_info *sbi = EXT2_SB(sb);
 
-	if (block_group >= sbi->s_groups_count) {
+	if (block_group >= sbi->s_groups_count)
+	{
 		ext2_error(sb, __func__, "block_group >= groups_count - "
-		           "block_group = %d, groups_count = %lu", block_group,
-		           sbi->s_groups_count);
+								 "block_group = %d, groups_count = %lu",
+				   block_group,
+				   sbi->s_groups_count);
 		return NULL;
 	}
 
 	group_desc = block_group >> EXT2_DESC_PER_BLOCK_BITS(sb);
 	offset = block_group & (EXT2_DESC_PER_BLOCK(sb) - 1);
-	if (!sbi->s_group_desc[group_desc]) {
+	if (!sbi->s_group_desc[group_desc])
+	{
 		ext2_error(sb, __func__, "Group descriptor not loaded - "
-		           "block_group = %d, group_desc = %lu, desc = %lu",
-		           block_group, group_desc, offset);
+								 "block_group = %d, group_desc = %lu, desc = %lu",
+				   block_group, group_desc, offset);
 		return NULL;
 	}
 
@@ -250,9 +256,10 @@ void ext2_free_blocks(struct inode *inode, unsigned long block, unsigned long co
 	unsigned freed;
 	unsigned long block_group, bit, i;
 
-	if (!ext2_data_blocks_valid(sbi, block, count)) {
-		ext2_error (sb, __func__, "Freeing invalid data blocks - block = %lu, count = %lu",
-		                block, count);
+	if (!ext2_data_blocks_valid(sbi, block, count))
+	{
+		ext2_error(sb, __func__, "Freeing invalid data blocks - block = %lu, count = %lu",
+				   block, count);
 		return;
 	}
 
@@ -261,25 +268,29 @@ void ext2_free_blocks(struct inode *inode, unsigned long block, unsigned long co
 	ext2_debug("freeing block(s) %lu-%lu from bg %lu\n", block, block + count - 1, block_group);
 
 	bitmap_bh = ext2_read_block_bitmap(sb, block_group);
-	if (!bitmap_bh) {
+	if (!bitmap_bh)
+	{
 		brelse(bitmap_bh);
 		return;
 	}
 
 	desc = ext2_get_group_desc(sb, block_group, &bh2);
-	if (!desc) {
+	if (!desc)
+	{
 		brelse(bitmap_bh);
 		return;
 	}
 
-	if (!ext2_data_blocks_valid_bg(desc, sbi, block, count)) {
+	if (!ext2_data_blocks_valid_bg(desc, sbi, block, count))
+	{
 		ext2_error(sb, __func__, "Freeing blocks in system zones - Block = %lu, count = %lu",
-		           block, count);
+				   block, count);
 		brelse(bitmap_bh);
 		return;
 	}
 
-	for (i = 0, freed = 0; i < count; i++) {
+	for (i = 0, freed = 0; i < count; i++)
+	{
 		if (!ext2_clear_bit_atomic(sb_bgl_lock(sbi, block_group), bit + i, bitmap_bh->b_data))
 			ext2_error(sb, __func__, "bit already cleared for block %lu", block + i);
 		else
@@ -293,7 +304,8 @@ void ext2_free_blocks(struct inode *inode, unsigned long block, unsigned long co
 	group_update_free_blocks(sb, block_group, desc, bh2, freed);
 
 	brelse(bitmap_bh);
-	if (freed) {
+	if (freed)
+	{
 		percpu_counter_add(&sbi->s_freeblocks_counter, freed);
 		inode->i_blocks -= (freed * sb->s_blocksize) / 512;
 		mark_inode_dirty(inode);
@@ -307,21 +319,55 @@ void ext2_free_blocks(struct inode *inode, unsigned long block, unsigned long co
  * Returns the group offset of the first allocated block and the number of
  * blocks it managed to allocate (using the count parameter).
  */
-/* ? */
-/* You can use find_next_zero_bit_le() and ext2_set_bit_atomic() functions to 
+
+/* You can use find_next_zero_bit_le() and ext2_set_bit_atomic() functions to
  * handle the bitmaps.
  */
 static int ext2_allocate_in_bg(struct super_block *sb, int group,
-                               struct buffer_head *bitmap_bh, unsigned long *count)
+							   struct buffer_head *bitmap_bh, unsigned long *count)
 {
 	ext2_fsblk_t group_first_block = ext2_group_first_block_no(sb, group);
 	ext2_fsblk_t group_last_block = ext2_group_last_block_no(sb, group);
 	ext2_grpblk_t nblocks = group_last_block - group_first_block + 1;
 	ext2_grpblk_t first_free_bit;
 	unsigned long num;
+	/*----------------------- OUR CODE -----------------------*/
+	/* Step 1: Find the first free bit in the bitmap */
+	first_free_bit = find_next_zero_bit_le(bitmap_bh->b_data, nblocks, 0);
 
-	/* ? */
-	return -1;
+	if (first_free_bit >= nblocks)
+		return -1; /* No free blocks found in this group */
+
+	/* Step 2: Check if we have enough contiguous blocks */
+	for (i = first_free_bit; i < first_free_bit + num_to_allocate && i < nblocks; i++)
+	{
+		if (test_bit_le(i, bitmap_bh->b_data))
+			break; /* Found an allocated block, cannot continue */
+		num_allocated++;
+	}
+
+	/* If we couldn't allocate the requested number of blocks */
+	if (num_allocated < num_to_allocate)
+	{
+		*count = num_allocated; /* Return the actual number of allocated blocks */
+	}
+	else
+	{
+		*count = num_to_allocate; /* Successfully allocated all requested blocks */
+	}
+
+	/* Step 3: Mark the blocks as allocated in the bitmap */
+	for (i = first_free_bit; i < first_free_bit + *count; i++)
+	{
+		ext2_set_bit_atomic(sb_bgl_lock(EXT2_SB(sb), group), i, bitmap_bh->b_data);
+	}
+
+	/* Mark the bitmap buffer as dirty to reflect the changes */
+	mark_buffer_dirty(bitmap_bh);
+
+	/* Step 4: Return the group-relative block number of the first allocated block */
+	return first_free_bit;
+	/*------------------------------------------------------*/
 }
 
 /*
@@ -342,14 +388,15 @@ ext2_fsblk_t ext2_new_blocks(struct inode *inode, unsigned long *countp, int *er
 	int bgi;
 	__u16 free_blocks;
 	__u32 group_no = ei->i_block_group;
-	ext2_grpblk_t grp_alloc_blk;  /* blockgroup-relative allocated block*/
-	ext2_fsblk_t ret_block;       /* filesystem-wide allocated block */
+	ext2_grpblk_t grp_alloc_blk; /* blockgroup-relative allocated block*/
+	ext2_fsblk_t ret_block;		 /* filesystem-wide allocated block */
 
 	/*
 	 * First, check if there are free blocks available in the whole fs.
 	 */
 	free_blocks = percpu_counter_read_positive(&sbi->s_freeblocks_counter);
-	if (free_blocks == 0) {
+	if (free_blocks == 0)
+	{
 		*errp = -ENOSPC;
 		return 0;
 	}
@@ -357,9 +404,11 @@ ext2_fsblk_t ext2_new_blocks(struct inode *inode, unsigned long *countp, int *er
 	/*
 	 * Now search each of the groups starting from the inode's group.
 	 */
-	for (bgi = 0; bgi < ngroups; bgi++, group_no = (group_no + 1) % ngroups) {
+	for (bgi = 0; bgi < ngroups; bgi++, group_no = (group_no + 1) % ngroups)
+	{
 		gdp = ext2_get_group_desc(sb, group_no, &gdp_bh);
-		if (!gdp) {
+		if (!gdp)
+		{
 			*errp = -EIO;
 			return 0;
 		}
@@ -371,7 +420,8 @@ ext2_fsblk_t ext2_new_blocks(struct inode *inode, unsigned long *countp, int *er
 
 		brelse(bitmap_bh);
 		bitmap_bh = ext2_read_block_bitmap(sb, group_no);
-		if (!bitmap_bh) {
+		if (!bitmap_bh)
+		{
 			*errp = -EIO;
 			return 0;
 		}
@@ -381,11 +431,10 @@ ext2_fsblk_t ext2_new_blocks(struct inode *inode, unsigned long *countp, int *er
 		if (grp_alloc_blk < 0)
 			continue;
 
-
 		//> We found and allocated the free block.
 		ret_block = grp_alloc_blk + ext2_group_first_block_no(sb, group_no);
 		ext2_debug("allocating block %lu located in bg %d (free_blocks: %d)\n",
-		           ret_block, group_no, gdp->bg_free_blocks_count);
+				   ret_block, group_no, gdp->bg_free_blocks_count);
 
 		group_update_free_blocks(sb, group_no, gdp, gdp_bh, -count);
 		percpu_counter_sub(&sbi->s_freeblocks_counter, count);
@@ -396,7 +445,8 @@ ext2_fsblk_t ext2_new_blocks(struct inode *inode, unsigned long *countp, int *er
 
 		*errp = 0;
 		brelse(bitmap_bh);
-		if (count < *countp) {
+		if (count < *countp)
+		{
 			mark_inode_dirty(inode);
 			*countp = count;
 		}
@@ -417,11 +467,12 @@ unsigned long ext2_count_free_blocks(struct super_block *sb)
 	unsigned long count = 0;
 	int i;
 
-        for (i = 0; i < EXT2_SB(sb)->s_groups_count; i++) {
-                desc = ext2_get_group_desc(sb, i, NULL);
-                if (!desc)
-                        continue;
-                count += le16_to_cpu(desc->bg_free_blocks_count);
+	for (i = 0; i < EXT2_SB(sb)->s_groups_count; i++)
+	{
+		desc = ext2_get_group_desc(sb, i, NULL);
+		if (!desc)
+			continue;
+		count += le16_to_cpu(desc->bg_free_blocks_count);
 	}
 	return count;
 }

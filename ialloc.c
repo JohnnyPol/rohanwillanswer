@@ -27,7 +27,7 @@
  * Read the inode bitmap for a given block_group.
  */
 static struct buffer_head *read_inode_bitmap(struct super_block *sb,
-                                             unsigned long block_group)
+											 unsigned long block_group)
 {
 	struct ext2_group_desc *desc;
 	struct buffer_head *bh = NULL;
@@ -39,7 +39,7 @@ static struct buffer_head *read_inode_bitmap(struct super_block *sb,
 	bh = sb_bread(sb, le32_to_cpu(desc->bg_inode_bitmap));
 	if (!bh)
 		ext2_error(sb, __func__, "Cannot read inode bitmap - block_group = %lu, inode_bitmap = %u",
-		           block_group, le32_to_cpu(desc->bg_inode_bitmap));
+				   block_group, le32_to_cpu(desc->bg_inode_bitmap));
 	return bh;
 }
 
@@ -53,7 +53,8 @@ static void ext2_release_inode(struct super_block *sb, int group, int dir)
 	struct buffer_head *bh;
 
 	desc = ext2_get_group_desc(sb, group, &bh);
-	if (!desc) {
+	if (!desc)
+	{
 		ext2_error(sb, __func__, "can't get descriptor for group %d", group);
 		return;
 	}
@@ -84,8 +85,9 @@ void ext2_free_inode(struct inode *inode)
 
 	ext2_debug("freeing inode %lu\n", ino);
 
-	if (ino < EXT2_FIRST_INO(sb) || ino > le32_to_cpu(es->s_inodes_count)) {
-		ext2_error (sb, __func__, "reserved or nonexistent inode %lu", ino);
+	if (ino < EXT2_FIRST_INO(sb) || ino > le32_to_cpu(es->s_inodes_count))
+	{
+		ext2_error(sb, __func__, "reserved or nonexistent inode %lu", ino);
 		return;
 	}
 
@@ -122,7 +124,7 @@ static int find_group(struct super_block *sb, struct inode *parent)
 	group = parent_group;
 	desc = ext2_get_group_desc(sb, group, NULL);
 	if (desc && le16_to_cpu(desc->bg_free_inodes_count) &&
-	            le16_to_cpu(desc->bg_free_blocks_count))
+		le16_to_cpu(desc->bg_free_blocks_count))
 		return group;
 
 	/*
@@ -138,14 +140,15 @@ static int find_group(struct super_block *sb, struct inode *parent)
 	 * So add our directory's i_ino into the starting point for the hash.
 	 */
 	group = (group + parent->i_ino) % ngroups;
-	for (i = 1; i < ngroups; i <<= 1) {
+	for (i = 1; i < ngroups; i <<= 1)
+	{
 		group += i;
 		if (group >= ngroups)
 			group -= ngroups;
 
 		desc = ext2_get_group_desc(sb, group, NULL);
 		if (desc && le16_to_cpu(desc->bg_free_inodes_count) &&
-		            le16_to_cpu(desc->bg_free_blocks_count))
+			le16_to_cpu(desc->bg_free_blocks_count))
 			return group;
 	}
 
@@ -154,8 +157,9 @@ static int find_group(struct super_block *sb, struct inode *parent)
 	 * has no free blocks.
 	 */
 	group = parent_group;
-	for (i = 0; i < ngroups; i++) {
-		group = (group+1) % ngroups;
+	for (i = 0; i < ngroups; i++)
+	{
+		group = (group + 1) % ngroups;
 		desc = ext2_get_group_desc(sb, group, NULL);
 		if (desc && le16_to_cpu(desc->bg_free_inodes_count))
 			return group;
@@ -188,45 +192,52 @@ struct inode *ext2_new_inode(struct inode *dir, umode_t mode)
 	ei = EXT2_I(inode);
 
 	group = find_group(sb, dir);
-	if (group == -1) {
+	if (group == -1)
+	{
 		err = -ENOSPC;
 		goto fail;
 	}
 
-	for (i = 0; i < sbi->s_groups_count; i++) {
+	for (i = 0; i < sbi->s_groups_count; i++)
+	{
 		gdp = ext2_get_group_desc(sb, group, &bh2);
-		if (!gdp) {
-			group = (group+1) % sbi->s_groups_count;
+		if (!gdp)
+		{
+			group = (group + 1) % sbi->s_groups_count;
 			continue;
 		}
 
 		brelse(bitmap_bh);
 		bitmap_bh = read_inode_bitmap(sb, group);
-		if (!bitmap_bh) {
+		if (!bitmap_bh)
+		{
 			err = -EIO;
 			goto fail;
 		}
 		ino = 0;
 
-repeat_in_this_group:
+	repeat_in_this_group:
 		ino = find_next_zero_bit_le((unsigned long *)bitmap_bh->b_data, inodes_pg, ino);
-		if (ino >= inodes_pg) {
+		if (ino >= inodes_pg)
+		{
 			/*
 			 * Rare race: find_group() decided that there were free
 			 * inodes in this group, but by the time we tried to
 			 * allocate one, they're all gone.  Just go and search
 			 * the next block group.
 			 */
-			group = (group+1) % sbi->s_groups_count;
+			group = (group + 1) % sbi->s_groups_count;
 			continue;
 		}
-		if (ext2_set_bit_atomic(sb_bgl_lock(sbi, group), ino, bitmap_bh->b_data)) {
+		if (ext2_set_bit_atomic(sb_bgl_lock(sbi, group), ino, bitmap_bh->b_data))
+		{
 			/*
 			 * Race again, the inode marked as occupied before we do so
 			 */
-			if (++ino >= inodes_pg) {
+			if (++ino >= inodes_pg)
+			{
 				/* This group is exhausted, try next group. */
-				group = (group+1) % sbi->s_groups_count;
+				group = (group + 1) % sbi->s_groups_count;
 				continue;
 			}
 			/* Try to find free inode in the same group. */
@@ -249,9 +260,11 @@ got:
 	brelse(bitmap_bh);
 
 	ino += group * inodes_pg + 1;
-	if (ino < EXT2_FIRST_INO(sb) || ino > le32_to_cpu(es->s_inodes_count)) {
-		ext2_error (sb, __func__, "reserved inode or inode > inodes count - "
-			    "block_group = %d,inode=%lu", group, ino);
+	if (ino < EXT2_FIRST_INO(sb) || ino > le32_to_cpu(es->s_inodes_count))
+	{
+		ext2_error(sb, __func__, "reserved inode or inode > inodes count - "
+								 "block_group = %d,inode=%lu",
+				   group, ino);
 		err = -EIO;
 		goto fail;
 	}
@@ -278,7 +291,8 @@ got:
 	ei->i_block_group = group;
 	ei->i_state = EXT2_STATE_NEW;
 	ext2_set_inode_flags(inode);
-	if (insert_inode_locked(inode) < 0) {
+	if (insert_inode_locked(inode) < 0)
+	{
 		ext2_error(sb, __func__, "inode number already in use - inode=%lu", ino);
 		err = -EIO;
 		goto fail;
@@ -301,9 +315,10 @@ unsigned long ext2_count_free_inodes(struct super_block *sb)
 {
 	struct ext2_group_desc *desc;
 	unsigned long count = 0;
-	int i;	
+	int i;
 
-	for (i = 0; i < EXT2_SB(sb)->s_groups_count; i++) {
+	for (i = 0; i < EXT2_SB(sb)->s_groups_count; i++)
+	{
 		desc = ext2_get_group_desc(sb, i, NULL);
 		if (!desc)
 			continue;
@@ -321,7 +336,8 @@ unsigned long ext2_count_dirs(struct super_block *sb)
 	unsigned long count = 0;
 	int i;
 
-	for (i = 0; i < EXT2_SB(sb)->s_groups_count; i++) {
+	for (i = 0; i < EXT2_SB(sb)->s_groups_count; i++)
+	{
 		desc = ext2_get_group_desc(sb, i, NULL);
 		if (!desc)
 			continue;
