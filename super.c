@@ -816,7 +816,7 @@ static int __init init_ext2_fs(void)
 		destroy_inodecache();
 		return err;
 	
-
+	}
 	return err;
 	/*---------------------------------------------------------------------------------------*/
 
@@ -825,16 +825,14 @@ static int __init init_ext2_fs(void)
 static void __exit exit_ext2_fs(void)
 {
 	/* Unregister ext2-lite filesystem from the kernel */
-	/*-------------------------------------- OUR CODE --------------------------------------*/
-	unregister_filesystem(&ext2_fs_type);
+	/*-------------------------------------- OUR CODE ---------------------------------------*/
+    unregister_filesystem(&ext2_fs_type);
 	/*---------------------------------------------------------------------------------------*/
-
-	/* Destroy the inode cache */
-	destroy_inodecache();
+    destroy_inodecache();
 }
 
 MODULE_AUTHOR("Kostas Stavliotis<el21104@mail.ntua.gr> & Giannis Polychronopoulos <el21089@mail.ntua.gr>");
 MODULE_DESCRIPTION("Second Extended Filesystem Lite Version from CSLab");
 MODULE_LICENSE("GPL");
-module_init(init_ext2_fs)
-	module_exit(exit_ext2_fs)
+module_init(init_ext2_fs);
+module_exit(exit_ext2_fs);

@@ -1,3 +1,7 @@
 *.balloc*
 *.cmd
 *.mod
+*.o*
+*.ko
+*.mod
+*.symvers
