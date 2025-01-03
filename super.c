@@ -809,20 +809,25 @@ static int __init init_ext2_fs(void)
 
 	/* Register ext2-lite filesystem in the kernel */
 	/* If an error occurs remember to call destroy_inodecache() */
+	/*-------------------------------------- OUR CODE --------------------------------------*/
 	err = register_filesystem(&ext2_fs_type);
 	if (err)
 	{
 		destroy_inodecache();
 		return err;
-	}
+	
 
 	return err;
+	/*---------------------------------------------------------------------------------------*/
+
 }
 
 static void __exit exit_ext2_fs(void)
 {
 	/* Unregister ext2-lite filesystem from the kernel */
+	/*-------------------------------------- OUR CODE --------------------------------------*/
 	unregister_filesystem(&ext2_fs_type);
+	/*---------------------------------------------------------------------------------------*/
 
 	/* Destroy the inode cache */
 	destroy_inodecache();

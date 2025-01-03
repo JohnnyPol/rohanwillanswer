@@ -260,6 +260,9 @@ static struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino,
 		ino > le32_to_cpu(EXT2_SB(sb)->s_es->s_inodes_count))
 		goto einval;
 
+	/*-------------------------------------- OUR CODE --------------------------------------*/
+
+
 	/* Figure out in which block is the inode we are looking for and get
 	 * its group block descriptor. */
 
@@ -289,6 +292,8 @@ static struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino,
 	/* Calculate the exact location of the inode within the block */
 	offset = (offset * inode_sz) % blocksize;
 	return (struct ext2_inode *)(bh->b_data + offset);
+	/*---------------------------------------------------------------------------------------*/
+
 
 einval:
 	ext2_error(sb, __func__, "bad inode number: %lu", (unsigned long)ino);
@@ -362,15 +367,21 @@ struct inode *ext2_iget(struct super_block *sb, unsigned long ino)
 	//> Setup the {inode,file}_operations structures depending on the type.
 	if (S_ISREG(inode->i_mode))
 	{
+	/*-------------------------------------- OUR CODE --------------------------------------*/
 		inode->i_op = &ext2_file_inode_operations;
 		inode->i_fop = &ext2_file_operations;
 		inode->i_mapping->a_ops = &ext2_aops;
+	/*---------------------------------------------------------------------------------------*/
+
 	}
 	else if (S_ISDIR(inode->i_mode))
 	{
+	/*-------------------------------------- OUR CODE --------------------------------------*/
 		inode->i_op = &ext2_dir_inode_operations;
 		inode->i_fop = &ext2_dir_operations;
 		inode->i_mapping->a_ops = &ext2_aops;
+	/*---------------------------------------------------------------------------------------*/
+
 	}
 	else if (S_ISLNK(inode->i_mode))
 	{

@@ -278,6 +278,8 @@ ext2_dirent *ext2_find_entry(struct inode *dir, const struct qstr *child,
 	/* Scan all the pages of the directory to find the requested name. */
 	for (i = 0; i < npages; i++)
 	{
+		/*-------------------------------------- OUR CODE --------------------------------------*/
+
 		kaddr = ext2_get_folio(dir, i, 0, foliop);
 		if (IS_ERR(kaddr))
 			continue; /* Skip to the next page if there is an error */
@@ -303,6 +305,8 @@ ext2_dirent *ext2_find_entry(struct inode *dir, const struct qstr *child,
 
 		folio_release_kmap(*foliop, kaddr); /* Release mapping for this page */
 	}
+	/*---------------------------------------------------------------------------------------*/
+
 	return ERR_PTR(-ENOENT);
 }
 

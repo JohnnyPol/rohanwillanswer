@@ -331,7 +331,7 @@ static int ext2_allocate_in_bg(struct super_block *sb, int group,
 	ext2_grpblk_t nblocks = group_last_block - group_first_block + 1;
 	ext2_grpblk_t first_free_bit;
 	unsigned long num;
-	/*----------------------- OUR CODE -----------------------*/
+	/*-------------------------------------- OUR CODE --------------------------------------*/
 	/* Step 1: Find the first free bit in the bitmap */
 	first_free_bit = find_next_zero_bit_le(bitmap_bh->b_data, nblocks, 0);
 
@@ -367,7 +367,7 @@ static int ext2_allocate_in_bg(struct super_block *sb, int group,
 
 	/* Step 4: Return the group-relative block number of the first allocated block */
 	return first_free_bit;
-	/*------------------------------------------------------*/
+	/*---------------------------------------------------------------------------------------*/
 }
 
 /*
