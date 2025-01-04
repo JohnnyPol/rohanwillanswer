@@ -351,13 +351,11 @@ static int ext2_allocate_in_bg(struct super_block *sb, int group,
 
 	/* If we couldn't allocate the requested number of blocks */
 	if (num_allocated < num_to_allocate)
-	{
 		*count = num_allocated; /* Return the actual number of allocated blocks */
-	}
+	
 	else
-	{
 		*count = num_to_allocate; /* Successfully allocated all requested blocks */
-	}
+	
 
 	/* Step 3: Mark the blocks as allocated in the bitmap */
 	for (i = first_free_bit; i < first_free_bit + *count; i++)
