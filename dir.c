@@ -267,10 +267,10 @@ ext2_dirent *ext2_find_entry(struct inode *dir, const struct qstr *child,
 	const char *name = child->name;
 	int namelen = child->len;
 	unsigned reclen = EXT2_DIR_REC_LEN(namelen);
-	unsigned long npages = dir_pages(dir);
+	unsigned long npages = dir_pages(dir); // Retrieves the number of pages associated with the directory
 	unsigned long i;
 	ext2_dirent *de;
-	char *kaddr;
+	
 
 	if (npages == 0)
 		return ERR_PTR(-ENOENT);
@@ -280,19 +280,20 @@ ext2_dirent *ext2_find_entry(struct inode *dir, const struct qstr *child,
 	{
 		/*-------------------------------------- OUR CODE --------------------------------------*/
 
-		kaddr = ext2_get_folio(dir, i, 0, foliop);
+		char *kaddr = ext2_get_folio(dir, i, 0, foliop); //  map the page into memory and retrieve a pointer (kaddr) to its data.
 		if (IS_ERR(kaddr))
+			// return ERR_CAST(kaddr); in the original code of ext2
 			continue; /* Skip to the next page if there is an error */
 
 		/* Iterate through the directory entries in the current page */
-		char *limit = kaddr + ext2_last_byte(dir, i) - EXT2_DIR_REC_LEN(1);
+		char *limit = kaddr + ext2_last_byte(dir, i) - reclen;
 		for (de = (ext2_dirent *)kaddr; (char *)de <= limit; de = ext2_next_entry(de))
 		{
 			if (de->rec_len == 0)
 			{
 				ext2_error(dir->i_sb, __func__, "zero-length directory entry");
 				folio_release_kmap(*foliop, kaddr);
-				return ERR_PTR(-EIO);
+				return ERR_PTR(-ENOENT);
 			}
 
 			/* Match the name with the current directory entry */
