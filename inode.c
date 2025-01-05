@@ -246,11 +246,11 @@ static struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino,
 										 struct buffer_head **p)
 {
 	struct buffer_head *bh;
-	unsigned long block_group;
-	unsigned long block;
-	unsigned long offset;
+	unsigned long block_group; // Identify which block group the inode belongs to.
+	unsigned long block;	   // The specific block within the inode table containing the inode.
+	unsigned long offset;	   // The offset of the inode within the block.
 	struct ext2_group_desc *gdp;
-	unsigned long inodes_pg = EXT2_INODES_PER_GROUP(sb);
+	unsigned long inodes_pg = EXT2_INODES_PER_GROUP(sb); // Inodes per group
 	int inode_sz = EXT2_INODE_SIZE(sb);
 	unsigned long blocksize = sb->s_blocksize;
 
@@ -262,16 +262,16 @@ static struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino,
 
 	/*-------------------------------------- OUR CODE --------------------------------------*/
 
-
 	/* Figure out in which block is the inode we are looking for and get
 	 * its group block descriptor. */
+	/*----------------------------------------------------------------*/
+	/* Determine the block group and offset within the group */
+	block_group = (ino - 1) / inodes_pg; // adjusted by 1 because inode numbers are 1-based
+	offset = (ino - 1) % inodes_pg; // Offset of the inode index within the group (for the byte offset we should've multiplied with the inode_sz)
+	/*----------------------------------------------------------------*/
 
 	/* Figure out the offset within the block group inode table */
-
-	/* Return the pointer to the appropriate ext2_inode */
-	/* Determine the block group and offset within the group */
-	block_group = (ino - 1) / inodes_pg;
-	offset = (ino - 1) % inodes_pg;
+	/*----------------------------------------------------------------*/
 
 	/* Get the group descriptor for the block group */
 	gdp = ext2_get_group_desc(sb, block_group, NULL);
@@ -279,21 +279,25 @@ static struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino,
 		goto einval;
 
 	/* Determine the block containing the inode table */
-	block = le32_to_cpu(gdp->bg_inode_table) +
-			(offset * inode_sz) / blocksize;
+	block = le32_to_cpu(gdp->bg_inode_table) + (offset * inode_sz) / blocksize;
+	// gdp->bg_inode_table: Points to the start of the inode table for the block group
 
 	/* Read the block from the inode table */
 	bh = sb_bread(sb, block);
 	if (!bh)
 		goto eio;
 
-	*p = bh;
+	*p = bh; // update the buffer head
 
 	/* Calculate the exact location of the inode within the block */
 	offset = (offset * inode_sz) % blocksize;
-	return (struct ext2_inode *)(bh->b_data + offset);
-	/*---------------------------------------------------------------------------------------*/
+	/*----------------------------------------------------------------*/
 
+	/* Return the pointer to the appropriate ext2_inode */
+	/*----------------------------------------------------------------*/
+	return (struct ext2_inode *)(bh->b_data + offset);
+	/*----------------------------------------------------------------*/
+	/*---------------------------------------------------------------------------------------*/
 
 einval:
 	ext2_error(sb, __func__, "bad inode number: %lu", (unsigned long)ino);
@@ -335,7 +339,7 @@ struct inode *ext2_iget(struct super_block *sb, unsigned long ino)
 	/*
 	 * Read the EXT2 inode *from disk*
 	 */
-	raw_inode = ext2_get_inode(inode->i_sb, ino, &bh);
+	raw_inode = ext2_get_inode(inode->i_sb, ino, &bh); // Calls .alloc_inode of ext2_sops
 	if (IS_ERR(raw_inode))
 	{
 		ret = PTR_ERR(raw_inode);
@@ -365,23 +369,22 @@ struct inode *ext2_iget(struct super_block *sb, unsigned long ino)
 		return ERR_PTR(ret);
 	}
 	//> Setup the {inode,file}_operations structures depending on the type.
-	if (S_ISREG(inode->i_mode))
+	if (S_ISREG(inode->i_mode)) /* Is a Regular File?*/
 	{
-	/*-------------------------------------- OUR CODE --------------------------------------*/
+		/*-------------------------------------- OUR CODE --------------------------------------*/
+		/* Functions defined in the ext2.h and used at namei.c as well*/
 		inode->i_op = &ext2_file_inode_operations;
 		inode->i_fop = &ext2_file_operations;
-		inode->i_mapping->a_ops = &ext2_aops;
-	/*---------------------------------------------------------------------------------------*/
-
+		inode->i_mapping->a_ops = &ext2_aops; // @a_ops: Methods.
+											  /*---------------------------------------------------------------------------------------*/
 	}
-	else if (S_ISDIR(inode->i_mode))
+	else if (S_ISDIR(inode->i_mode)) /* Is a Directory*/
 	{
-	/*-------------------------------------- OUR CODE --------------------------------------*/
+		/*-------------------------------------- OUR CODE --------------------------------------*/
 		inode->i_op = &ext2_dir_inode_operations;
 		inode->i_fop = &ext2_dir_operations;
-		inode->i_mapping->a_ops = &ext2_aops;
-	/*---------------------------------------------------------------------------------------*/
-
+		inode->i_mapping->a_ops = &ext2_aops; // ext2_aops: Defined in this file
+											  /*---------------------------------------------------------------------------------------*/
 	}
 	else if (S_ISLNK(inode->i_mode))
 	{

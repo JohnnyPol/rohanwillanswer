@@ -492,15 +492,28 @@ static int ext2_show_options(struct seq_file *seq, struct dentry *root)
 }
 
 static const struct super_operations ext2_sops = {
-	.alloc_inode = ext2_alloc_inode,
-	.free_inode = ext2_free_inode_sb,
-	.write_inode = ext2_write_inode, // defined in inode.c
-	.evict_inode = ext2_evict_inode, // defined in inode.c
-	.put_super = ext2_put_super,
-	.sync_fs = ext2_sync_fs,
+	.alloc_inode = ext2_alloc_inode, // Allocate memory for an ext2_inode_info (contains a vfs inode)
+	.free_inode = ext2_free_inode_sb, // Free memory occupied by ext2_inode_info (contains a vfs inode)
+	
+	// Called by VFS to free memory occupied from a superblock (called when umounting) 
+	.put_super = ext2_put_super, // Locates buffer corresponding with superblock (with s_es of ext2_sb_info), mark_buffer_dirty, frees buffers and ext2_sb_info. 
+	
+	// Called by VFS to transfer on disk superblock's data
+	.sync_fs = ext2_sync_fs, // 
 	.statfs = ext2_statfs,
-	.remount_fs = ext2_remount,
-	.show_options = ext2_show_options,
+	
+	.remount_fs = ext2_remount, // Called by VFS on an already mounted file system to change mount parameters.
+	.show_options = ext2_show_options, // Called by VFS to read the parameters of the mounted filesystem.
+
+
+	/* Defined in inode.c*/
+	
+	// Called when a VFS inode in memory must be written on disk.
+	.write_inode = ext2_write_inode, // Calls ext2_get_inode, locates corresponding inode on disk, writes the data  
+	
+	// Called from VFS for some inode that has 0 links. 
+	.evict_inode = ext2_evict_inode, // Free blocks of disk occupied by that inode
+
 };
 
 static int ext2_fill_super(struct super_block *sb, void *data, int silent)
@@ -794,10 +807,12 @@ static struct dentry *ext2_mount(struct file_system_type *fs_type,
 
 static struct file_system_type ext2_fs_type = {
 	.owner = THIS_MODULE,
-	.name = "ext2-lite",
-	.mount = ext2_mount,
-	.kill_sb = kill_block_super,
-	.fs_flags = FS_REQUIRES_DEV,
+	.name = "ext2-lite", // The name of the filesystem which will also appear in /proc/filesystems
+	.mount = ext2_mount, // Defines how the filesystem is mounted
+	.kill_sb = kill_block_super, // Handles cleanup of the superblock and associated resources during filesystem unmount on a block device
+	
+	/* Every instance of given filesystem uses underlying block device, where filesystem content is stored.*/
+	.fs_flags = FS_REQUIRES_DEV, // A mask of bits used to define various file system parameters.
 };
 MODULE_ALIAS_FS("ext2-lite");
 
@@ -819,7 +834,6 @@ static int __init init_ext2_fs(void)
 	}
 	return err;
 	/*---------------------------------------------------------------------------------------*/
-
 }
 
 static void __exit exit_ext2_fs(void)
@@ -834,5 +848,5 @@ static void __exit exit_ext2_fs(void)
 MODULE_AUTHOR("Kostas Stavliotis<el21104@mail.ntua.gr> & Giannis Polychronopoulos <el21089@mail.ntua.gr>");
 MODULE_DESCRIPTION("Second Extended Filesystem Lite Version from CSLab");
 MODULE_LICENSE("GPL");
-module_init(init_ext2_fs);
-module_exit(exit_ext2_fs);
+module_init(init_ext2_fs); // Module starts, calls init_ext2_fs.
+module_exit(exit_ext2_fs); // Module removed
