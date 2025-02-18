@@ -270,7 +270,6 @@ ext2_dirent *ext2_find_entry(struct inode *dir, const struct qstr *child,
 	unsigned long npages = dir_pages(dir); // Retrieves the number of pages associated with the directory
 	unsigned long i;
 	ext2_dirent *de;
-	
 
 	if (npages == 0)
 		return ERR_PTR(-ENOENT);

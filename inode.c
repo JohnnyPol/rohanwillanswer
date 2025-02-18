@@ -267,7 +267,7 @@ static struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino,
 	/*----------------------------------------------------------------*/
 	/* Determine the block group and offset within the group */
 	block_group = (ino - 1) / inodes_pg; // adjusted by 1 because inode numbers are 1-based
-	offset = (ino - 1) % inodes_pg; // Offset of the inode index within the group (for the byte offset we should've multiplied with the inode_sz)
+	offset = (ino - 1) % inodes_pg;		 // Offset of the inode index within the group (for the byte offset we should've multiplied with the inode_sz)
 	/*----------------------------------------------------------------*/
 
 	/* Figure out the offset within the block group inode table */
@@ -358,7 +358,7 @@ struct inode *ext2_iget(struct super_block *sb, unsigned long ino)
 	inode_set_atime(inode, (signed)le32_to_cpu(raw_inode->i_atime), 0);
 	inode_set_ctime(inode, (signed)le32_to_cpu(raw_inode->i_ctime), 0);
 	inode_set_mtime(inode, (signed)le32_to_cpu(raw_inode->i_mtime), 0);
-	//ei->i_dtime = le32_to_cpu(raw_inode->i_dtime);
+	// ei->i_dtime = le32_to_cpu(raw_inode->i_dtime);
 	inode->i_blocks = le32_to_cpu(raw_inode->i_blocks);
 	inode->i_size = le32_to_cpu(raw_inode->i_size);
 	if (i_size_read(inode) < 0)

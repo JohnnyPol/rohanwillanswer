@@ -333,7 +333,7 @@ static int ext2_allocate_in_bg(struct super_block *sb, int group,
 	unsigned long num;
 	unsigned long num_to_allocate = *count;
 	unsigned long num_allocated = 0; // Tracks the number of allocated blocks
-    unsigned long i; // Counter for "for loops"
+	unsigned long i;				 // Counter for "for loops"
 	/*-------------------------------------- OUR CODE --------------------------------------*/
 	/* Find the first free bit in the bitmap */
 	first_free_bit = find_next_zero_bit_le(bitmap_bh->b_data, nblocks, 0); // TODO: how does this work?
@@ -354,7 +354,6 @@ static int ext2_allocate_in_bg(struct super_block *sb, int group,
 		*count = num_allocated; /* Return the actual number of allocated blocks */
 	else
 		*count = num_to_allocate; /* Successfully allocated all requested blocks */
-	
 
 	/* Mark the blocks as allocated in the bitmap */
 	for (i = first_free_bit; i < first_free_bit + *count; i++)
@@ -365,7 +364,7 @@ static int ext2_allocate_in_bg(struct super_block *sb, int group,
 	/* Mark the bitmap buffer as dirty to reflect the changes */
 	mark_buffer_dirty(bitmap_bh); // TODO: what does this mean?
 
-	/* Step 4: Return the group-relative block number of the first allocated block */
+	/* Return the group-relative block number of the first allocated block */
 	return first_free_bit;
 	/*---------------------------------------------------------------------------------------*/
 }
